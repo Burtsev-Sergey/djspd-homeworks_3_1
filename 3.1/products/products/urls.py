@@ -23,5 +23,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('products/', products_list_view),
     path('products/<int:product_id>/', ProductDetailsView.as_view()),
-    path('products/reviews/<int:product_id>/', ProductFilteredReviews.as_view())
+    path('products/reviews/', ProductFilteredReviews.as_view(), name='all-reviews'),
+    path('products/reviews/<int:product_id>/', ProductFilteredReviews.as_view(), name='filtered-reviews'),
 ]

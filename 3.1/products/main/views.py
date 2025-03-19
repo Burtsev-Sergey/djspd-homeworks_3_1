@@ -23,28 +23,39 @@ class ProductDetailsView(APIView):
     return Response(ser.data)
 
 
-# class ProductDetailsView(APIView):
-#     def get(self, request, product_id):
-        
-
-#         """реализуйте получение товара по id, если его нет, то выдайте 404
-#         реализуйте сериализацию полученных данных
-#         отдайте отсериализованные данные в Response"""
-#         pass
-
-
-
-
-
-
-
-
-
 # доп задание:
 class ProductFilteredReviews(APIView):
-    def get(self, request, product_id):
-        """обработайте значение параметра mark и
-        реализуйте получение отзывов по конкретному товару с определённой оценкой
-        реализуйте сериализацию полученных данных
-        отдайте отсериализованные данные в Response"""
-        pass
+  def get(self, request, product_id=None):
+    mark = request.query_params.get('mark', None)
+
+    if product_id is not None:
+      product = get_object_or_404(Product, pk=product_id)
+
+      # Фильтрация отзывов по product_id и, если задано, по mark
+      if mark is not None:
+        try:
+          mark = int(mark)
+        except ValueError:
+          return Response({"detail": "Invalid mark parameter"}, status=400)
+
+        # Фильтрация по оценке
+        reviews = Review.objects.filter(product=product, mark=mark)
+      else:
+         # Получаем все отзывы если mark не задано
+        reviews = Review.objects.filter(product=product)
+    else:
+      # Если product_id не задан, получаем все отзывы
+      if mark is not None:
+        try:
+          mark = int(mark)
+        except ValueError:
+          return Response({"detail": "Invalid mark parameter"}, status=400)
+
+        # Получаем все отзывы с фильтрацией по оценке
+        reviews = Review.objects.filter(mark=mark)
+      else:
+        # Получаем все отзывы без фильтрации, если mark не задано
+        reviews = Review.objects.all()
+
+    ser = ReviewSerializer(reviews, many=True)
+    return Response(ser.data)
