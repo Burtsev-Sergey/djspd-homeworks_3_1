@@ -1,19 +1,11 @@
 from django.db import models
 
-
-VERY_BAD = 1
-BAD = 2
-SATISFACTORY = 3
-GOOD = 4
-PERFECT = 5
-
-MARK_CHOICES = (
-    (VERY_BAD, "Очень плохо"),
-    (BAD, "Плохо"),
-    (SATISFACTORY, "Удовлетворительно"),
-    (GOOD, "Хорошо"),
-    (PERFECT, "Отлично")
-)
+class MarkChoices(models.IntegerChoices):
+    VERY_BAD = 1
+    BAD = 2
+    SATISFACTORY = 3
+    GOOD = 4
+    PERFECT = 5
 
 
 class Product(models.Model):
@@ -28,5 +20,5 @@ class Product(models.Model):
 class Review(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='reviews')
     text = models.TextField()
-    mark = models.PositiveSmallIntegerField(choices=MARK_CHOICES)
+    mark = models.PositiveSmallIntegerField(choices=MarkChoices.choices)
     created_at = models.DateTimeField(auto_now_add=True)

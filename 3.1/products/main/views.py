@@ -2,11 +2,10 @@ from django.shortcuts import render
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.views import APIView
-import requests
+
 from django.shortcuts import get_object_or_404
 
-from main.models import Review
-from main.models import Product
+from main.models import Review, Product, MarkChoices
 from main.serializers import ReviewSerializer, ProductListSerializer, ProductDetailsSerializer
 
 @api_view(['GET'])
@@ -25,37 +24,24 @@ class ProductDetailsView(APIView):
 
 # доп задание:
 class ProductFilteredReviews(APIView):
-  def get(self, request, product_id=None):
-    mark = request.query_params.get('mark', None)
+    def get(self, request, product_id=None):
+        """Фильтрация отзывов по оценке и продукту."""
+        mark = request.query_params.get('mark')
 
-    if product_id is not None:
-      product = get_object_or_404(Product, pk=product_id)
+        filter_kwargs = {}
+        if product_id is not None:
+            filter_kwargs["product_id"] = product_id
 
-      # Фильтрация отзывов по product_id и, если задано, по mark
-      if mark is not None:
-        try:
-          mark = int(mark)
-        except ValueError:
-          return Response({"detail": "Invalid mark parameter"}, status=400)
+        if mark:
+            if not mark.isdigit():
+                return Response({"detail": "Invalid mark parameter"}, status=400)
 
-        # Фильтрация по оценке
-        reviews = Review.objects.filter(product=product, mark=mark)
-      else:
-         # Получаем все отзывы если mark не задано
-        reviews = Review.objects.filter(product=product)
-    else:
-      # Если product_id не задан, получаем все отзывы
-      if mark is not None:
-        try:
-          mark = int(mark)
-        except ValueError:
-          return Response({"detail": "Invalid mark parameter"}, status=400)
+            mark = int(mark)
+            if mark not in MarkChoices.values:
+                return Response({"detail": f"Mark must be between {MarkChoices.VERY_BAD} and {MarkChoices.PERFECT}"}, status=400)
 
-        # Получаем все отзывы с фильтрацией по оценке
-        reviews = Review.objects.filter(mark=mark)
-      else:
-        # Получаем все отзывы без фильтрации, если mark не задано
-        reviews = Review.objects.all()
+            filter_kwargs["mark"] = mark
 
-    ser = ReviewSerializer(reviews, many=True)
-    return Response(ser.data)
+        reviews = Review.objects.filter(**filter_kwargs)
+        serializer = ReviewSerializer(reviews, many=True)
+        return Response(serializer.data)
